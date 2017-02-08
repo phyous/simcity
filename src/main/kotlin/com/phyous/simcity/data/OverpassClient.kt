@@ -16,7 +16,10 @@ class OverpassClient {
     companion object Methods {
 
         val API_URL = "http://overpass-api.de/api/interpreter"
-        val HIGHWAY_TYPES = arrayOf("motorway", "trunk", "primary", "secondary", "tertiary", "unclassified", "residential", "motorway_link", "trunk_link", "primary_link", "secondary_link", "tertiary_link", "living_street");
+        val HIGHWAY_TYPES = arrayOf(
+                "motorway", "trunk", "primary", "secondary", "tertiary", "unclassified",
+                "residential", "motorway_link", "trunk_link", "primary_link", "secondary_link",
+                "tertiary_link", "living_street")
 
         fun getRoads(boundingBox: Bounds): Result<JsonObject, Exception> {
             val (request, response, result) = API_URL.httpPost()
@@ -25,7 +28,7 @@ class OverpassClient {
                     .responseString()
 
 
-            if (result.component2() != null) return Result.of{throw Exception(result.component2().toString())}
+            if (result.component2() != null) return Result.of { throw Exception(result.component2().toString()) }
             else {
                 return Result.of(
                         Json.createReader(
@@ -38,9 +41,10 @@ class OverpassClient {
             var q = "[out:json];("
             val bounds = boundingBox.toList().joinToString(",", "(", ")")
 
-            for (s in HIGHWAY_TYPES) {
-                q += "way[\"highway\"=\"$s\"]$bounds;"
-            }
+            q += HIGHWAY_TYPES.fold(StringBuilder()) {
+                    builder,
+                    highway -> builder.append("way[\"highway\"=\"$highway\"]$bounds;")
+                }.toString()
 
             q += "); (._;>;); out;"
             return q
