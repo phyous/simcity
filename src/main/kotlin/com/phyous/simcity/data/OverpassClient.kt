@@ -1,9 +1,9 @@
 package com.phyous.simcity.data
 
+import com.beust.klaxon.JsonObject
+import com.beust.klaxon.Parser
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
-import javax.json.Json
-import javax.json.JsonObject
 
 class OverpassClient {
 
@@ -21,7 +21,7 @@ class OverpassClient {
                 "residential", "motorway_link", "trunk_link", "primary_link", "secondary_link",
                 "tertiary_link", "living_street")
 
-        fun getRoads(boundingBox: Bounds): Result<JsonObject, Exception> {
+        fun getRoads(boundingBox: Bounds): Result<String, Exception> {
             val (request, response, result) = API_URL.httpPost()
                     .body(constructQuery(boundingBox))
                     .header(Pair("Accept-Charset", "utf-8;q=0.7,*;q=0.7"))
@@ -31,8 +31,7 @@ class OverpassClient {
             if (result.component2() != null) return Result.of { throw Exception(result.component2().toString()) }
             else {
                 return Result.of(
-                        Json.createReader(
-                                result.get().byteInputStream()).readObject()
+                        (Parser().parse(result.get().byteInputStream()) as JsonObject).toJsonString(true)
                 )
             }
         }
