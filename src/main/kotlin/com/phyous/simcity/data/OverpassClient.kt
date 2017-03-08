@@ -22,17 +22,16 @@ class OverpassClient {
                 "tertiary_link", "living_street")
 
         fun getRoads(boundingBox: Bounds): Result<String, Exception> {
-            val (request, response, result) = API_URL.httpPost()
+            val (_, _, result) = API_URL.httpPost()
                     .body(constructQuery(boundingBox))
                     .header(Pair("Accept-Charset", "utf-8;q=0.7,*;q=0.7"))
                     .responseString()
 
-
-            if (result.component2() != null) return Result.of { throw Exception(result.component2().toString()) }
+            if (result.component2() != null) {
+                return Result.of { throw Exception(result.component2().toString()) }
+            }
             else {
-                return Result.of(
-                        (Parser().parse(result.get().byteInputStream()) as JsonObject).toJsonString(true)
-                )
+                return Result.of((Parser().parse(result.get().byteInputStream()) as JsonObject).toJsonString(true))
             }
         }
 
