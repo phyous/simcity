@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.github.kittinunf.result.Result
 import java.io.File
 import java.io.InputStream
 import java.util.HashMap
@@ -14,6 +13,8 @@ class GeoMap {
     var wayMap: MutableMap<Long, Way> = HashMap()
     // Maps the position of a node along a way
     var nodeWays: MutableMap<Long, MutableList<WayPosition>> = HashMap()
+    // Holds a reverse index mapping street names to node sets
+    var nodeIndex: MutableMap<String, MutableSet<Long>> = HashMap()
 
     // The position of a node in an way
     data class WayPosition(val way: Way, val position: Int)
@@ -50,6 +51,17 @@ class GeoMap {
         return nodeMap.get(nodeId)
     }
 
+    fun lookupNode(intersectA: String, intersectB: String): Node? {
+        val a = nodeIndex.get(intersectA.toUpperCase())
+        val b = nodeIndex.get(intersectB.toUpperCase())
+
+        if (a != null && b != null ) {
+            return a.intersect(b).toList().firstOrNull()?.let { this.node(it) }
+        } else {
+            return null
+        }
+    }
+
     private fun processData(nodes: List<Node>, ways: List<Way>) {
         nodes.forEach { e -> nodeMap.put(e.id, e) }
         ways.forEach {
@@ -64,10 +76,28 @@ class GeoMap {
                 }
             }
         }
+        nodeIndex = this.buildIndex(wayMap.values)
     }
 
-    data class ParsedGraphData(val nodeMap: HashMap<Long, Node>, val wayMap: HashMap<Long, Way>)
+    private fun buildIndex(ways: Iterable<Way>):MutableMap<String, MutableSet<Long>> {
+        var ret: MutableMap<String, MutableSet<Long>> = HashMap()
+        ways.map{ (_, nodes, tags) ->
+            val nameBase = tags["tiger:name_base"]?.toUpperCase()
+            val nameType = tags["tiger:name_type"]?.toUpperCase()
+            val baseAndType = if(nameBase != null && nameType != null) "$nameBase $nameType" else null
+            val name = tags["tiger:name"]?.toUpperCase()
+            Pair(listOfNotNull(nameBase, baseAndType, name), nodes)
+        }.forEach { (strings, nodes) ->
+            strings.forEach { s -> if (s in ret) ret[s]?.addAll(nodes) else ret.put(s, HashSet(nodes)) }
+        }
+        return ret
+    }
 
+
+    /**
+     * Parse an inputStream of data corresponding to a map into a structured data set we can use to initialize the map.
+     */
+    data class ParsedGraphData(val nodeMap: HashMap<Long, Node>, val wayMap: HashMap<Long, Way>)
     private fun parse(inputStream: InputStream): ParsedGraphData {
         val mapper: ObjectMapper = ObjectMapper()
         val json: JsonNode = mapper.readTree(inputStream)
