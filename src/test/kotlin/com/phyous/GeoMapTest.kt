@@ -58,12 +58,16 @@ class GeoMapTest {
         val n1 = Node(1, 0.0, 1.0)
         val n2 = Node(2, 1.0, 1.0)
         val n3 = Node(3, 0.0, 0.0)
+        val w1 = Way(1, listOf(1,2))
+        val w2 = Way(2, listOf(2,3))
 
-        val cameFrom = mapOf(Pair(n1, n2), Pair(n2, n3))
-        val ret = reconstructPath(cameFrom, n1)
-        assertTrue(ret[0] == n1)
-        assertTrue(ret[1] == n2)
-        assertTrue(ret[2] == n3)
+        val cameFrom = mapOf(Pair(n2, Edge(n1, n2, w1)), Pair(n3, Edge(n2, n3, w2)))
+        val ret = reconstructPath(cameFrom, n3)
+        assertTrue(ret[0].fromNode == n3)
+        assertTrue(ret[0].toNode == n3)
+        assertTrue(ret[0].way == null)
+        assertTrue(ret[1].fromNode == n2)
+        assertTrue(ret[2].fromNode == n1)
     }
 
     @Test fun testAstar() {

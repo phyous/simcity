@@ -36,12 +36,13 @@ class NodeDistanceHeap : PriorityQueue<NodeCost>(
  * A* using pseudocode described here:
  * https://en.wikipedia.org/wiki/A*_search_algorithm
  */
-fun GeoMap.path(start: Node, goal: Node): Result<List<Node>, Exception> {
+
+fun GeoMap.path(start: Node, goal: Node): Result<List<Edge>, Exception> {
     val closedSet = HashSet<Node>()
     val openSet = NodeDistanceHeap()
-    openSet.add(NodeCost(start, distanceBetween(start, goal)))
+    openSet.add(NodeCost(start, distanceMeters(start, goal)))
 
-    val cameFrom = HashMap<Node, Node>()
+    val cameFrom = HashMap<Node, Edge>()
     // For each node, the cost of getting from the start node to that node.
     val gScore = HashMap<Node, Double>().withDefault { x -> Double.MAX_VALUE }
     gScore.put(start, 0.0)
@@ -53,19 +54,20 @@ fun GeoMap.path(start: Node, goal: Node): Result<List<Node>, Exception> {
             return Result.of { reconstructPath(cameFrom, current) }
         }
         closedSet.add(current)
-        this.getChildren(current).forEach { (neighbor, _): GeoMap.NodeRoute ->
+        this.getChildren(current).forEach { nodeRoute: GeoMap.NodeRoute ->
+            val neighbor = nodeRoute.node
             if (closedSet.contains(neighbor)) return@forEach
 
             val curGscore = gScore[current] as Double
-            val tentativeScore = curGscore + distanceBetween(current, neighbor)
+            val tentativeScore = curGscore + distanceMeters(current, neighbor)
 
             if(!openSet.contains(neighbor)) {
-                openSet.add(NodeCost(neighbor, tentativeScore + distanceBetween(neighbor, goal)))
+                openSet.add(NodeCost(neighbor, tentativeScore + distanceMeters(neighbor, goal)))
             } else if (tentativeScore > curGscore) {
                 return@forEach
             }
 
-            cameFrom.put(neighbor, current)
+            cameFrom.put(neighbor, Edge(current, neighbor, nodeRoute.way))
             gScore.put(neighbor, tentativeScore)
         }
     }
@@ -75,14 +77,19 @@ fun GeoMap.path(start: Node, goal: Node): Result<List<Node>, Exception> {
 
 /**
  * Given a node, walk the visited nodes in cameFrom and reconstruct the path taken to the origin
+ * Node in cameFrom map is the destination
  */
-fun reconstructPath(cameFrom: Map<Node, Node>, current: Node): List<Node> {
-    val totalPath = mutableListOf(current)
+fun reconstructPath(cameFrom: Map<Node, Edge>, current: Node): List<Edge> {
+    // Ordered list of edges that make up the path
+    val totalPath = ArrayList<Edge>()
+    totalPath.add(Edge(current, current, null))
+    // the fromNode we use to construct an Edge
     var cur = current
+
     while (cur in cameFrom.keys) {
-        val nextNode = cameFrom[cur] as Node
-        totalPath.add(nextNode)
-        cur = nextNode
+        val nextEdge = cameFrom[cur] as Edge
+        totalPath.add(nextEdge)
+        cur = nextEdge.fromNode
     }
     return totalPath
 }
@@ -94,7 +101,7 @@ fun reconstructPath(cameFrom: Map<Node, Node>, current: Node): List<Node> {
  *
  * This will be our heuristic function for A*
  */
-fun distanceBetween(from: Node, to: Node): Double {
+fun distanceMeters(from: Node, to: Node): Double {
     val R = 6371e3
     val φ1 = from.lat.toRadians()
     val φ2 = to.lat.toRadians()
@@ -109,6 +116,14 @@ fun distanceBetween(from: Node, to: Node): Double {
     return d
 }
 
+fun distanceMiles(from: Node, to: Node): Double {
+    return distanceMeters(from, to) * 0.000621371
+}
+
+fun distanceFeet(from: Node, to: Node): Double {
+    return distanceMeters(from, to) * 3.28084
+}
+
 fun Double.toRadians(): Double {
-    return (this * Math.PI) / 180
+    return (this * Math.PI) / 180.0
 }
