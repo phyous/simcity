@@ -94,6 +94,19 @@ fun reconstructPath(cameFrom: Map<Node, Edge>, current: Node): List<Edge> {
     return totalPath
 }
 
+fun angle(n1: Node, n2: Node): Double {
+    val dLon: Double = (n2.lng - n1.lng)
+
+    val y: Double = Math.sin(dLon) * Math.cos(n2.lat)
+    val x: Double = Math.cos(n1.lat) * Math.sin(n2.lat) - Math.sin(n1.lat) * Math.cos(n2.lat) * Math.cos(dLon)
+
+    var brng: Double = Math.atan2(y, x)
+
+    brng = Math.toDegrees(brng)
+    brng = (brng + 360) % 360
+
+    return brng
+}
 
 /**
  * Distance between two nodes using haversine formula:
@@ -109,8 +122,8 @@ fun distanceMeters(from: Node, to: Node): Double {
     val Δλ = (to.lng - from.lng).toRadians()
     val a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
             Math.cos(φ1) * Math.cos(φ2) *
-                    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+    val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
     val d = R * c
     return d

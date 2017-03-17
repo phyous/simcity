@@ -27,7 +27,7 @@ class LiveMapTest {
         if (from != null && to != null) {
             map.path(from, to).fold({ result ->
                 result.forEach(::println)
-                println(String.format("Total trip distance: %.4f miels",
+                println(String.format("Total trip distance: %.4f miles",
                         result.fold(0.0) { acc, edge -> acc + distanceMiles(edge.fromNode, edge.toNode) }))
             }, { error ->
                 fail(error.toString())
