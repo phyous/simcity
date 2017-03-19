@@ -94,6 +94,9 @@ fun reconstructPath(cameFrom: Map<Node, Edge>, current: Node): List<Edge> {
     return totalPath
 }
 
+/**
+ * Get the angle of the line going from node1 to node2
+ */
 fun angle(n1: Node, n2: Node): Double {
     val dLon: Double = (n2.lng - n1.lng)
 
@@ -106,6 +109,13 @@ fun angle(n1: Node, n2: Node): Double {
     brng = (brng + 360) % 360
 
     return brng
+}
+
+/**
+ * Get the angle formed form node1 to node2 as a cardinal direction
+ */
+fun angleCardinal(n1: Node, n2: Node): Direction {
+    return Direction.parse(angle(n1, n2))
 }
 
 /**
