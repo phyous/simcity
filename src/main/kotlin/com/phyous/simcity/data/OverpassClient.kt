@@ -13,7 +13,7 @@ class OverpassClient {
         }
     }
 
-    companion object Methods {
+    companion object OverpassClient {
 
         val API_URL = "http://overpass-api.de/api/interpreter"
         val HIGHWAY_TYPES = arrayOf(
@@ -25,6 +25,7 @@ class OverpassClient {
             val (_, _, result) = API_URL.httpPost()
                     .body(constructQuery(boundingBox))
                     .header(Pair("Accept-Charset", "utf-8;q=0.7,*;q=0.7"))
+                    .timeout(30000)
                     .responseString()
 
             if (result.component2() != null) {

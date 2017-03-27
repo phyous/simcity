@@ -22,7 +22,7 @@ class LiveMapTest {
 
     @Test fun testGetDirections() {
         val from = map.lookupNode("25th", "Mississippi")
-        val to = map.lookupNode("Mission", "5th")
+        val to = map.lookupNode("Mission", "1st")
 
         if (from != null && to != null) {
             map.path(from, to).fold({ result ->
