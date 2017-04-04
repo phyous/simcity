@@ -1,7 +1,7 @@
 package com.phyous
 
 import com.phyous.simcity.model.Node
-import com.phyous.simcity.model.angle
+import com.phyous.simcity.util.angle
 import org.junit.Test
 import kotlin.test.assertTrue
 

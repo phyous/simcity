@@ -2,6 +2,9 @@ package com.phyous
 
 import com.phyous.simcity.data.OverpassClient
 import com.phyous.simcity.model.GeoMap
+import com.phyous.simcity.model.Node
+import com.phyous.simcity.util.distanceMiles
+import com.phyous.simcity.util.path
 import kotlinx.coroutines.experimental.*
 import java.io.File
 import java.lang.Exception
@@ -9,14 +12,17 @@ import java.lang.Thread.sleep
 import java.util.*
 
 fun main(args: Array<String>) = runBlocking {
-    val selection = Main.selectMap()
+    val selectedMap = Main.selectMap()
+    Main.lookupDirections(selectedMap)
 }
 
 class Main {
-
     companion object Main {
         val dataDir = "./data/"
 
+        /**
+         * Retreive all maps stored on the filesystem.
+         */
         fun getStoredMaps(): List<String> {
             return File(dataDir)
                     .listFiles()
@@ -24,6 +30,9 @@ class Main {
                     .map { x -> x.canonicalPath.split("/").last() }
         }
 
+        /**
+         * UI flow for selecting an existing map, or downloading a new one.
+         */
         suspend fun selectMap(): GeoMap {
             val storedMaps = getStoredMaps()
             println("Welcome to simcity! Let's grab a map and get some directions ...\n" +
@@ -42,8 +51,7 @@ class Main {
         }
 
         /**
-         * Read a value from an input source using a provided scanner and
-         * a reader function (e.g: nextInt, nextLine... etc)
+         * Read a value from an input source using a provided scanner function (e.g: nextInt, nextLine... etc)
          * A function to validate input can optionally be provided as well.
          */
         fun <T> readValue(readerFunc: (Scanner) -> T,
@@ -63,7 +71,7 @@ class Main {
         }
 
         /**
-         * Query stdin for a lat/lng bounding box, and use the Overpass client to query & store all relevant map data
+         * Query stdin for a lat/lng bounding box, and use the Overpass client to query & store all relevant map data.
          */
         suspend fun downloadMap(): GeoMap {
         println("To download a new map, we'll need to form a bounding box with min/max latitude & longitude.\n" +
@@ -104,6 +112,33 @@ class Main {
                 println(error.toString())
                 throw Exception()
             })
+        }
+
+        /**
+         * UI flow for looking up directions between two points given a GeoMap.
+         */
+        fun lookupDirections(map: GeoMap) {
+            println("Provide two intersections in the selected map to do a direction lookup.")
+            println("Ex: from> 25th & Mississippi")
+            println("    to>   Mission & 1st")
+
+            fun strToNode(map: GeoMap, str: String): Node {
+                val splits = str.split("&").map(String::trim).take(2)
+                assert(splits.size == 2, {"You must provide an intersection (2 street names) separated by '&'"})
+                val node = map.lookupNode(splits[0], splits[1]) ?: error("Intersection '$str' not found on map!")
+                return node
+            }
+
+            print("from")
+            val from = strToNode(map, readValue(readerFunc = Scanner::nextLine))
+            print("to")
+            val to = strToNode(map, readValue(readerFunc = Scanner::nextLine))
+
+            map.path(from, to).fold({ result ->
+                result.forEach(::println)
+                println(String.format("Total trip distance: %.4f miles",
+                        result.fold(0.0) { acc, edge -> acc + distanceMiles(edge.fromNode, edge.toNode) }))
+            }, { error -> throw Exception(error.toString()) })
         }
     }
 }

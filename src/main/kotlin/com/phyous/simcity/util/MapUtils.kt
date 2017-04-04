@@ -1,8 +1,15 @@
-package com.phyous.simcity.model
+package com.phyous.simcity.util
 
 import com.github.kittinunf.result.Result
+import com.phyous.simcity.model.Direction
+import com.phyous.simcity.model.Edge
+import com.phyous.simcity.model.GeoMap
+import com.phyous.simcity.model.Node
 import java.util.PriorityQueue
 
+/**
+ * Data structure used to model the cost of traveling to a Node.
+ */
 data class NodeCost(val node: Node, val cost: Double) {
     override fun equals(other: Any?): Boolean {
         if (other is Node) {
@@ -17,9 +24,12 @@ data class NodeCost(val node: Node, val cost: Double) {
     }
 }
 
-// Implementation of a min heap for node distances
+/**
+ * Implementation of a min heap for node distances.
+ * Used in implementation of A*.
+ */
 class NodeDistanceHeap : PriorityQueue<NodeCost>(
-        kotlin.Comparator { (_, c1), (_, c2) ->
+        Comparator { (_, c1), (_, c2) ->
             val cost = c1 - c2
             when {
                 cost < 0f -> -1
@@ -33,10 +43,9 @@ class NodeDistanceHeap : PriorityQueue<NodeCost>(
 }
 
 /**
- * A* using pseudocode described here:
+ * Implementation of A* using pseudocode described here:
  * https://en.wikipedia.org/wiki/A*_search_algorithm
  */
-
 fun GeoMap.path(start: Node, goal: Node): Result<List<Edge>, Exception> {
     val closedSet = HashSet<Node>()
     val openSet = NodeDistanceHeap()
@@ -76,8 +85,8 @@ fun GeoMap.path(start: Node, goal: Node): Result<List<Edge>, Exception> {
 }
 
 /**
- * Given a node, walk the visited nodes in cameFrom and reconstruct the path taken to the origin
- * Node in cameFrom map is the destination
+ * Given a node, walk the visited nodes in cameFrom and reconstruct the path taken to the origin.
+ * Node in cameFrom map is the destination.
  */
 fun reconstructPath(cameFrom: Map<Node, Edge>, current: Node): List<Edge> {
     // Ordered list of edges that make up the path
@@ -91,11 +100,11 @@ fun reconstructPath(cameFrom: Map<Node, Edge>, current: Node): List<Edge> {
         totalPath.add(nextEdge)
         cur = nextEdge.fromNode
     }
-    return totalPath
+    return totalPath.reversed()
 }
 
 /**
- * Get the angle of the line going from node1 to node2
+ * Get the angle of the line going from node1 to node2.
  */
 fun angle(n1: Node, n2: Node): Double {
     val dLon: Double = (n2.lng - n1.lng)
@@ -112,7 +121,7 @@ fun angle(n1: Node, n2: Node): Double {
 }
 
 /**
- * Get the angle formed form node1 to node2 as a cardinal direction
+ * Get the angle formed form node1 to node2 as a cardinal direction.
  */
 fun angleCardinal(n1: Node, n2: Node): Direction {
     return Direction.parse(angle(n1, n2))

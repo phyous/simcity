@@ -1,6 +1,8 @@
 package com.phyous
 
 import com.phyous.simcity.model.*
+import com.phyous.simcity.util.path
+import com.phyous.simcity.util.reconstructPath
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test

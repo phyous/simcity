@@ -1,8 +1,8 @@
 package com.phyous
 
 import com.phyous.simcity.model.GeoMap
-import com.phyous.simcity.model.distanceMiles
-import com.phyous.simcity.model.path
+import com.phyous.simcity.util.distanceMiles
+import com.phyous.simcity.util.path
 import org.junit.Test
 import java.io.File
 import kotlin.test.assertTrue
