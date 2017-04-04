@@ -104,6 +104,33 @@ fun reconstructPath(cameFrom: Map<Node, Edge>, current: Node): List<Edge> {
 }
 
 /**
+ * Takes a list of edges that make up a path, and collapses adjacent nodes into a list that is human readable.
+ * ex:  [255170283] 0.02 miles W on 25th Street
+ *      [255170283] 0.03 miles W on 25th Street
+ *      [183198770] 0.04 miles NE on Pennsylvania Avenue
+ *      [427282394] 0.04 miles NE on Pennsylvania Avenue
+ * out: 0.05 miles W on 25th Street
+ *      0.08 miles NE on Pennsylvania Avenue
+ */
+fun printablePath(edges:List<Edge>): List<String> {
+    var dist = edges.first().dist()
+    var angle = edges.first().angle()
+    var wayName = edges.first().name()
+    val collect = mutableListOf<String>()
+    edges.drop(1).forEach { e ->
+        if (e.name().equals(wayName)) {
+            dist += e.dist()
+        } else {
+            collect.add(String.format("%.2f miles %s on %s", dist, angle, wayName))
+            dist = e.dist()
+            angle = e.angle()
+            wayName = e.name()
+        }
+    }
+    return collect
+}
+
+/**
  * Get the angle of the line going from node1 to node2.
  */
 fun angle(n1: Node, n2: Node): Double {

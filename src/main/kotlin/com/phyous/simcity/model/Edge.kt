@@ -13,12 +13,18 @@ class Edge(val fromNode:Node, val toNode:Node, val way:Way?) {
         return way?.tags?.getOrElse("name") { way.tags.get("highway") as String}
     }
 
+    fun dist(): Double {
+        return distanceMiles(fromNode, toNode)
+    }
+
+    fun angle(): Direction {
+        return angleCardinal(fromNode, toNode)
+    }
+
     override fun toString(): String {
-        val distMiles = distanceMiles(fromNode, toNode)
         val name = this.name()
         if (name != null && way != null) {
-            val direction = angleCardinal(fromNode, toNode)
-            return String.format("[%d] %.2f miles %s on %s", way.id, distMiles, direction, name)
+            return String.format("[%d] %.2f miles %s on %s", way.id, dist(), angle(), name)
         } else {
             return String.format("Destination @ lat:[%.4f] lng:[%.4f]", fromNode.lat, fromNode.lng)
         }
